@@ -1,9 +1,9 @@
 import axios from 'axios'
 import {useEffect, useState, useRef} from 'react'
 //d3
-import {LineSeries, Crosshair, AreaSeries ,
+import {LineSeries, Borders, AreaSeries ,
     FlexibleXYPlot, XAxis, YAxis, Highlight,
-    VerticalGridLines, HorizontalGridLines  } from 'react-vis'
+    HorizontalGridLines  } from 'react-vis'
 
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -16,22 +16,22 @@ export default function BarChart({assetId}) {
     const [filter, setFilter] = useState()
     const [series, setSeries] = useState()
     const [lastDrawLocation, setLastDrawLocation] = useState(null)
+    const [isFetched, setIsFetched] = useState(false)
 
-    // const newData = data.map((snap, index) => ({x: index, y: snap}))
     const yArray = data.map(snap=>snap.y) 
     const xArray = data.map(snap=>snap.x) 
-    console.log(xArray.filter(timestamp => timestamp))
 
     useEffect(() => {
         getData();
       }, [])
   
       const getData = () => {
-          //Retrieve hourly - 90 days
-          axios.get(`https://api.coingecko.com/api/v3/coins/${assetId}/market_chart?vs_currency=usd&days=90`)
-          .then(res => {
-              setData(res.data.prices.map(snap => ({x: snap[0], y: snap[1]})))
-          }).catch(err => {console.log(err)})
+        //Retrieve hourly - 90 days
+        axios.get(`https://api.coingecko.com/api/v3/coins/${assetId}/market_chart?vs_currency=usd&days=90`)
+        .then(res => {
+            setData(res.data.prices.map(snap => ({x: snap[0], y: snap[1]})))
+            setIsFetched(true)
+        }).catch(err => {console.log(err)})
       }
     
     return (
@@ -46,18 +46,45 @@ export default function BarChart({assetId}) {
                     onClick={() => setDataSelection('minutes')}>Daily view</button>
             </div> */}
             {points.length > 0 ?
-                <div className="h-16">
+                <div className="w-max h-20 mx-auto mt-4 px-2 flex flex-col justify-center shadow bg-yellow-200">
                     <p>Date: {new Date(points[0].x).toString().slice(0,24)}</p>
-                    <p>Price: ${numberWithCommas(Math.round(points[0].y*100)/100)}</p>
+                    <p>Price: <span className="font-bold">${numberWithCommas(Math.round(points[0].y*100)/100)}</span></p>
                 </div>
                 :
-                <p className="h-16">Nope</p>
+                <div className="h-20 mt-4"></div>
+            }
+            {!isFetched && 
+                <p className="text-center font-bold">Fetching data...</p>
             }
             <FlexibleXYPlot margin={{left: 100, right: 50}} height={400}
                 onMouseLeave={() => setPoints([])}
                 xDomain={lastDrawLocation && [lastDrawLocation.left, lastDrawLocation.right]}
-                yDomain={[Math.min(...yArray) * 0.95, Math.max(...yArray) * 1.1]}
-                >
+                yDomain={lastDrawLocation ? [lastDrawLocation.top, lastDrawLocation.bottom] : [Math.min(...yArray) * 0.95, Math.max(...yArray) * 1.1]}
+            >
+                <HorizontalGridLines style={{stroke: '#ddd'}} />
+                <AreaSeries 
+                    data={points}
+                    strokeStyle="solid"
+                    style={{fill: 'none'}}
+                />
+                <LineSeries
+                    data={data}
+                    onNearestX={v => setPoints([v])}
+                    strokeStyle="solid"
+                    style={{fill: 'none'}}
+                />
+                <Highlight
+                    onBrushEnd={(area) => setLastDrawLocation(area)}
+                    onDrag={area => {
+                        setLastDrawLocation({
+                            bottom: lastDrawLocation.bottom + (area.top - area.bottom),
+                            left: lastDrawLocation.left - (area.right - area.left),
+                            right: lastDrawLocation.right - (area.right - area.left),
+                            top: lastDrawLocation.top + (area.top - area.bottom)
+                        })
+                    }}
+                />
+                <Borders style={{all: {fill: '#fff'}}} />
                 <XAxis
                     title="Date"
                     tickFormat={(value, index) => {
@@ -80,30 +107,6 @@ export default function BarChart({assetId}) {
                     attrAxis="x"
                     orientation="left"
                     style={{stroke: 'black'}}
-                />
-                <HorizontalGridLines style={{stroke: '#ddd'}} />
-                <AreaSeries 
-                    data={points}
-                    strokeStyle="solid"
-                    style={{fill: 'none'}}
-                />
-                <LineSeries
-                    data={data}
-                    onNearestX={v => setPoints([v])}
-                    strokeStyle="solid"
-                    style={{fill: 'none'}}
-                />
-                <Highlight
-                    enableY={false}
-                    onBrushEnd={(area) => setLastDrawLocation(area)}
-                    onDrag={area => {
-                        setLastDrawLocation({
-                            bottom: lastDrawLocation.bottom + (area.top - area.bottom),
-                            left: lastDrawLocation.left - (area.right - area.left),
-                            right: lastDrawLocation.right - (area.right - area.left),
-                            top: lastDrawLocation.top + (area.top - area.bottom)
-                        })
-                    }}
                 />
             </FlexibleXYPlot>
             <div>

@@ -43,8 +43,8 @@ export default function Home() {
 
 const CryptoLink = (props) => {
   return(
-    <Link href="/crypto/[id]" as={`/crypto/${props.id}`}>
-    <div className="w-32 m-4 p-4 text-center shadow hover:bg-gray-100">
+    <Link href="/crypto/[id]" as={`/crypto/${props.id}`} >
+    <div className="w-32 m-4 p-4 text-center shadow hover:bg-gray-100 cursor-pointer">
       <Image className="" src={props.imgUrl} width={50} height={50} />
       <p className="text-xl">{props.name}</p>
     </div>

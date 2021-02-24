@@ -12,15 +12,13 @@ function numberWithCommas(x) {
 export default function album({assetData}) {
     const router = useRouter();
 
-    console.log(assetData)
-
     return (
         <div className="w-full min-h-screen bg-gray-100">
             <Head>
                 {/* <title>{entryData.name}</title>
                 <meta name={entryData.name} content={entryData.name} /> */}
             </Head>
-            <Link href="/"><button className="mt-4 ml-4 p-4 rounded shadow text-xl text-gray-100 bg-blue-600">Back home</button></Link>
+            <Link href="/"><button className="mt-4 ml-4 p-4 rounded shadow text-xl text-gray-100 bg-yellow-600">Back home</button></Link>
             <div className="w-9/12 m-auto">
               <div>
                 <h1 className="text-6xl font-bold">{assetData.name} <span className="text-gray-400">{assetData.symbol}</span></h1>
